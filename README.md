@@ -1,0 +1,1 @@
+I implemented, as an exercise a simple JSON parser: given a JSON string, a Python data structure (object or list) is returned. According to json.org.
