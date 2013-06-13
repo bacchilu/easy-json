@@ -218,9 +218,13 @@ class JsonParser(object):
         return ret * sign
 
 
+def loads(json):
+    return JsonParser(json).parse()
+
+
 if __name__ == '__main__':
     json = \
         u'{"Luca\\n": "A\\u1234B", "luca": {}, "a": true, "False": false, "null": null, "lica": ["Luca", {}], "1": 12.4e-2}'
 
     import pprint
-    pprint.pprint(JsonParser(json).parse())
+    pprint.pprint(loads(json))
