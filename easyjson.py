@@ -17,12 +17,12 @@ class Tokenizer(object):
 
     def assertValues(self, values):
         if self.current not in values:
-            raise JsonParserException(u'%s non in %s' % (self.current,
+            raise JsonParserException(u'%s not in %s' % (self.current,
                     values))
 
     def isEnd(self):
         if self.current is not None:
-            raise JsonParserException('Errore alla fine')
+            raise JsonParserException('Wrong character at EOF')
 
     def next(self):
         try:
@@ -45,7 +45,7 @@ class JsonParser(object):
             self.tokenizer.isEnd()
             return ret
         except KeyError:
-            raise JsonParserException(u'Parse Error')
+            raise JsonParserException(u'Parsing error')
 
     def parseObject(self):
         ret = {}
@@ -113,12 +113,12 @@ class JsonParser(object):
                     try:
                         ret += c[self.tokenizer.current]
                     except KeyError:
-                        raise JsonParserException(u'Wrong Control Character'
+                        raise JsonParserException(u'Wrong control character'
                                 )
             elif ord(self.tokenizer.current) >= 32:
                 ret += self.tokenizer.current
             else:
-                raise JsonParserException(u'Wrong Character in string')
+                raise JsonParserException(u'Wrong character in string')
         self.tokenizer.assertValues(u'"')
         self.tokenizer.next()
         return ret
@@ -138,7 +138,7 @@ class JsonParser(object):
         try:
             return d[self.tokenizer.current]()
         except KeyError:
-            raise JsonParserException(u'Wrong Character in value')
+            raise JsonParserException(u'Wrong character in value')
 
     def parseTrue(self):
         self.tokenizer.assertValues(u't')
@@ -222,9 +222,22 @@ def loads(json):
     return JsonParser(json).parse()
 
 
+def pyEncode(elem, encoding):
+    if isinstance(elem, dict):
+        return dict((pyEncode(k, encoding), pyEncode(v, encoding))
+                    for (k, v) in elem.iteritems())
+    if isinstance(elem, list):
+        return [pyEncode(e, encoding) for e in elem]
+    if isinstance(elem, unicode):
+        return elem.encode(encoding)
+    return elem
+
+
 if __name__ == '__main__':
     json = \
         u'{"Luca\\n": "A\\u1234B", "luca": {}, "a": true, "False": false, "null": null, "lica": ["Luca", {}], "1": 12.4e-2}'
 
     import pprint
     pprint.pprint(loads(json))
+
+    pprint.pprint(pyEncode(loads(json), 'utf-8'))
