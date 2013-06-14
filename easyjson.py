@@ -12,7 +12,8 @@ class JsonParserException(Exception):
 class Tokenizer(object):
 
     def __init__(self, s):
-        self.content = (c for c in s if not c.isspace())
+        self.skipblanks = True
+        self.content = (c for c in s)
         self.current = None
 
     def assertValues(self, values):
@@ -27,6 +28,10 @@ class Tokenizer(object):
     def next(self):
         try:
             self.current = self.content.next()
+            if self.current == u'"':
+                self.skipblanks = not self.skipblanks
+            if self.skipblanks and self.current.isspace():
+                return self.next()
         except StopIteration:
             self.current = None
         return self.current
@@ -235,7 +240,7 @@ def pyEncode(elem, encoding):
 
 if __name__ == '__main__':
     json = \
-        u'{"Luca\\n": "A\\u1234B", "luca": {}, "a": true, "False": false, "null": null, "lica": ["Luca", {}], "1": 12.4e-2}'
+        u'{"Luca\\n": "A\\u1234B", "luca": {}, "a": true, "False": false, "null": null, "lica": ["Luca", {}], "1": 12.4e-2, "Luca Bacchi": "Bacchi Luca"}'
 
     import pprint
     pprint.pprint(loads(json))
