@@ -233,11 +233,64 @@ def pyEncode(elem, encoding):
     return elem
 
 
+class JsonVisitor(object):
+
+    def __init__(self):
+        self.resultString = u''
+
+    def dumps(self, pyJson):
+        if isinstance(pyJson, dict):
+            return self.dumpDict(pyJson)
+        if isinstance(pyJson, list):
+            return self.dumpList(pyJson)
+        raise JsonParserException('Wrong Python argument')
+
+    def dumpDict(self, pyJson):
+        assert isinstance(pyJson, dict)
+        resultString = u'{'
+        for (k, v) in pyJson.iteritems():
+            resultString += u', '.join(self.dumpString(k) + u': '
+                    + self.dumpValue(v) for (k, v) in
+                    pyJson.iteritems())
+        resultString += u'}'
+        return resultString
+
+    def dumpList(self, pyJson):
+        assert isinstance(pyJson, list)
+        resultString = u'['
+        resultString += u', '.join(self.dumpValue(e) for e in pyJson)
+        resultString += u']'
+        return resultString
+
+    def dumpString(self, pyJson):
+        assert isinstance(pyJson, unicode)
+        resultString = u'"'
+        for c in pyJson:
+            if c == u'"':
+                resultString += u'\\"'
+            elif c == u'\\':
+                resultString += u'\\\\'
+            elif c == u'/':
+                resultString += u'\\/'
+            else:
+                resultString += c
+        resultString += u'"'
+        return resultString
+
+    def dumpValue(self, pyJson):
+        return u'value'
+
+
 if __name__ == '__main__':
     json = \
         u'{"Luca\\n": "A\\u1234B", "luca": {}, "a": true, "False": false, "null": null, "lica": ["Luca", {}], "1": 12.4e-2}'
 
-    import pprint
-    pprint.pprint(loads(json))
+    pyJson = loads(json)
 
-    pprint.pprint(pyEncode(loads(json), 'utf-8'))
+    import pprint
+
+    pprint.pprint(pyJson)
+
+    pprint.pprint(pyEncode(pyJson, 'utf-8'))
+
+    print JsonVisitor().dumps(pyJson)
