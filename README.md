@@ -19,3 +19,10 @@ The "pyEncode" utility is useful to encode all unicode strings in the returned d
 
 	d = {u'Hello World': [1, u'due', {u'tre': null}]}
     print easyjson.pyEncode(d, 'utf-8')
+
+"pyDecode" usage:
+
+    d = {'Luca': [2, 'Bacchi']}
+    print easyjson.pyDecode(d, 'utf-8')
+    
+    > {u'Luca': [2, u'Bacchi']}
