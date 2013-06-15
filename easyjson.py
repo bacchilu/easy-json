@@ -238,11 +238,83 @@ def pyEncode(elem, encoding):
     return elem
 
 
+class JsonVisitor(object):
+
+    def dumps(self, pyJson):
+        if isinstance(pyJson, dict):
+            return self.dumpDict(pyJson)
+        if isinstance(pyJson, list):
+            return self.dumpList(pyJson)
+        raise JsonParserException('Wrong Python argument')
+
+    def dumpDict(self, pyJson):
+        assert isinstance(pyJson, dict)
+        resultString = u'{'
+        resultString += u', '.join(self.dumpString(k) + u': '
+                                   + self.dumpValue(v) for (k, v) in
+                                   pyJson.iteritems())
+        resultString += u'}'
+        return resultString
+
+    def dumpList(self, pyJson):
+        assert isinstance(pyJson, list)
+        resultString = u'['
+        resultString += u', '.join(self.dumpValue(e) for e in pyJson)
+        resultString += u']'
+        return resultString
+
+    def dumpString(self, pyJson):
+        assert isinstance(pyJson, unicode)
+        resultString = u'"'
+        for c in pyJson:
+            charDict = {
+                u'"': u'\\"',
+                u'\\': u'\\\\',
+                u'/': u'\\/',
+                u'\b': u'\\b',
+                u'\f': u'\\f',
+                u'\n': u'\\n',
+                u'\r': u'\\r',
+                u'\t': u'\\t',
+                }
+            try:
+                resultString += charDict[c]
+            except KeyError:
+                resultString += c
+        resultString += u'"'
+        return resultString
+
+    def dumpValue(self, pyJson):
+        if isinstance(pyJson, unicode):
+            return self.dumpString(pyJson)
+        if isinstance(pyJson, decimal.Decimal):
+            return self.dumpNumber(pyJson)
+        if isinstance(pyJson, dict):
+            return self.dumpDict(pyJson)
+        if isinstance(pyJson, list):
+            return self.dumpList(pyJson)
+        if isinstance(pyJson, bool):
+            return pyJson and u'true' or u'false'
+        if pyJson is None:
+            return u'null'
+        raise JsonParserException('Wrong Python argument')
+
+    def dumpNumber(self, pyJson):
+        return u'%f' % pyJson
+
+
+def dumps(pyJson):
+    return JsonVisitor().dumps(pyJson)
+
+
 if __name__ == '__main__':
     json = \
         u'{"Luca\\n": "A\\u1234B", "luca": {}, "a": true, "False": false, "null": null, "lica": ["Luca", {}], "1": 12.4e-2, "Luca Bacchi": "Bacchi Luca"}'
 
-    import pprint
-    pprint.pprint(loads(json))
+    pyJson = loads(json)
 
-    pprint.pprint(pyEncode(loads(json), 'utf-8'))
+    import pprint
+
+    pprint.pprint(pyJson)
+    pprint.pprint(pyEncode(pyJson, 'utf-8'))
+    pprint.pprint(dumps(pyJson))
