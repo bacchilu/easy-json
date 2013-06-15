@@ -12,7 +12,8 @@ class JsonParserException(Exception):
 class Tokenizer(object):
 
     def __init__(self, s):
-        self.content = (c for c in s if not c.isspace())
+        self.skipblanks = True
+        self.content = (c for c in s)
         self.current = None
 
     def assertValues(self, values):
@@ -27,6 +28,10 @@ class Tokenizer(object):
     def next(self):
         try:
             self.current = self.content.next()
+            if self.current == u'"':
+                self.skipblanks = not self.skipblanks
+            if self.skipblanks and self.current.isspace():
+                return self.next()
         except StopIteration:
             self.current = None
         return self.current
@@ -235,9 +240,6 @@ def pyEncode(elem, encoding):
 
 class JsonVisitor(object):
 
-    def __init__(self):
-        self.resultString = u''
-
     def dumps(self, pyJson):
         if isinstance(pyJson, dict):
             return self.dumpDict(pyJson)
@@ -248,10 +250,9 @@ class JsonVisitor(object):
     def dumpDict(self, pyJson):
         assert isinstance(pyJson, dict)
         resultString = u'{'
-        for (k, v) in pyJson.iteritems():
-            resultString += u', '.join(self.dumpString(k) + u': '
-                    + self.dumpValue(v) for (k, v) in
-                    pyJson.iteritems())
+        resultString += u', '.join(self.dumpString(k) + u': '
+                                   + self.dumpValue(v) for (k, v) in
+                                   pyJson.iteritems())
         resultString += u'}'
         return resultString
 
@@ -266,31 +267,54 @@ class JsonVisitor(object):
         assert isinstance(pyJson, unicode)
         resultString = u'"'
         for c in pyJson:
-            if c == u'"':
-                resultString += u'\\"'
-            elif c == u'\\':
-                resultString += u'\\\\'
-            elif c == u'/':
-                resultString += u'\\/'
-            else:
+            charDict = {
+                u'"': u'\\"',
+                u'\\': u'\\\\',
+                u'/': u'\\/',
+                u'\b': u'\\b',
+                u'\f': u'\\f',
+                u'\n': u'\\n',
+                u'\r': u'\\r',
+                u'\t': u'\\t',
+                }
+            try:
+                resultString += charDict[c]
+            except KeyError:
                 resultString += c
         resultString += u'"'
         return resultString
 
     def dumpValue(self, pyJson):
-        return u'value'
+        if isinstance(pyJson, unicode):
+            return self.dumpString(pyJson)
+        if isinstance(pyJson, decimal.Decimal):
+            return self.dumpNumber(pyJson)
+        if isinstance(pyJson, dict):
+            return self.dumpDict(pyJson)
+        if isinstance(pyJson, list):
+            return self.dumpList(pyJson)
+        if isinstance(pyJson, bool):
+            return pyJson and u'true' or u'false'
+        if pyJson is None:
+            return u'null'
+        raise JsonParserException('Wrong Python argument')
+
+    def dumpNumber(self, pyJson):
+        return u'%f' % pyJson
+
+
+def dumps(pyJson):
+    return JsonVisitor().dumps(pyJson)
 
 
 if __name__ == '__main__':
     json = \
-        u'{"Luca\\n": "A\\u1234B", "luca": {}, "a": true, "False": false, "null": null, "lica": ["Luca", {}], "1": 12.4e-2}'
+        u'{"Luca\\n": "A\\u1234B", "luca": {}, "a": true, "False": false, "null": null, "lica": ["Luca", {}], "1": 12.4e-2, "Luca Bacchi": "Bacchi Luca"}'
 
     pyJson = loads(json)
 
     import pprint
 
     pprint.pprint(pyJson)
-
     pprint.pprint(pyEncode(pyJson, 'utf-8'))
-
-    print JsonVisitor().dumps(pyJson)
+    pprint.pprint(dumps(pyJson))
