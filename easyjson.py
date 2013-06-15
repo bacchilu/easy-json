@@ -278,6 +278,10 @@ class JsonVisitor(object):
             return self.dumpString(pyJson)
         if isinstance(pyJson, decimal.Decimal):
             return self.dumpNumber(pyJson)
+        if isinstance(pyJson, int):
+            return self.dumpNumber(pyJson)
+        if isinstance(pyJson, float):
+            return self.dumpNumber(pyJson)
         if isinstance(pyJson, dict):
             return self.dumpDict(pyJson)
         if isinstance(pyJson, list):
@@ -289,7 +293,7 @@ class JsonVisitor(object):
         raise JsonParserException('Wrong Python argument')
 
     def dumpNumber(self, pyJson):
-        return u'%f' % pyJson
+        return unicode(pyJson)
 
 
 def dumps(pyJson):
