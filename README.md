@@ -14,6 +14,7 @@ Usage:
     print easyjson.loads(json)
 
 Also a "dumps" function has been implemented: a Python dict or list is required as an argument. All values (see json.org for the meaning of value) are intended to be unicode types. See the utility "pyDecode" if you need to convert a Python dict or list to correct format.
+Al decimal.Decimal, float and int types are interpreted as JSON number type.
 
 The "pyEncode" utility is useful to encode all unicode strings in the returned data structure (also keys in the dicts) in byte strings in the desired encoding
 
