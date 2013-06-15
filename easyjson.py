@@ -2,13 +2,13 @@
 # -*- coding: utf-8 -*-
 
 """
-easyjson.py
+EasyJson.py - https://github.com/bacchilu/easy-json
 
 An easy to understand JSON parser.
 See the main function for usage sample.
 
-Luca Bacchi <bacchilu@gmail.com>
-http://www.lucabacchi.it
+
+Luca Bacchi <bacchilu@gmail.com> - http://www.lucabacchi.it
 """
 
 import decimal
