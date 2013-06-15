@@ -1,4 +1,4 @@
-# Overview
+# EasyJson.py
 
 I implemented, as an exercise a simple JSON parser: given a JSON unicode string, a Python data structure (object or list) is returned. According to json.org. The input JSON is expected to be a unicode string.
 

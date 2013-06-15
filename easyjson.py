@@ -1,6 +1,16 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+"""
+easyjson.py
+
+An easy to understand JSON parser.
+See the main function for usage sample.
+
+Luca Bacchi <bacchilu@gmail.com>
+http://www.lucabacchi.it
+"""
+
 import decimal
 
 
