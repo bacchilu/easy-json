@@ -227,17 +227,6 @@ def loads(json):
     return JsonParser(json).parse()
 
 
-def pyEncode(elem, encoding):
-    if isinstance(elem, dict):
-        return dict((pyEncode(k, encoding), pyEncode(v, encoding))
-                    for (k, v) in elem.iteritems())
-    if isinstance(elem, list):
-        return [pyEncode(e, encoding) for e in elem]
-    if isinstance(elem, unicode):
-        return elem.encode(encoding)
-    return elem
-
-
 class JsonVisitor(object):
 
     def dumps(self, pyJson):
@@ -307,6 +296,28 @@ def dumps(pyJson):
     return JsonVisitor().dumps(pyJson)
 
 
+def pyEncode(elem, encoding):
+    if isinstance(elem, dict):
+        return dict((pyEncode(k, encoding), pyEncode(v, encoding))
+                    for (k, v) in elem.iteritems())
+    if isinstance(elem, list):
+        return [pyEncode(e, encoding) for e in elem]
+    if isinstance(elem, unicode):
+        return elem.encode(encoding)
+    return elem
+
+
+def pyDecode(elem, encoding):
+    if isinstance(elem, dict):
+        return dict((pyDecode(k, encoding), pyDecode(v, encoding))
+                    for (k, v) in elem.iteritems())
+    if isinstance(elem, list):
+        return [pyDecode(e, encoding) for e in elem]
+    if isinstance(elem, str):
+        return elem.decode(encoding)
+    return elem
+
+
 if __name__ == '__main__':
     json = \
         u'{"Luca\\n": "A\\u1234B", "luca": {}, "a": true, "False": false, "null": null, "lica": ["Luca", {}], "1": 12.4e-2, "Luca Bacchi": "Bacchi Luca"}'
@@ -318,3 +329,5 @@ if __name__ == '__main__':
     pprint.pprint(pyJson)
     pprint.pprint(pyEncode(pyJson, 'utf-8'))
     pprint.pprint(dumps(pyJson))
+
+    pprint.pprint(pyDecode({'luca': 'bacchi'}, 'utf-8'))
