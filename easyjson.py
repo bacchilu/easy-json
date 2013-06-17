@@ -21,10 +21,21 @@ class JsonParserException(Exception):
 
 class Tokenizer(object):
 
-    def __init__(self, s):
+    def __init__(self, s, encoding='utf-8'):
         self.skipblanks = True
-        self.content = (c for c in s)
+        self.content = self.getGenerator(s, encoding)
         self.current = None
+
+    def getGenerator(self, fp, encoding):
+        try:
+            while True:
+                ret = fp.read(1).decode(encoding)
+                if ret == '':
+                    raise StopIteration
+                yield ret
+        except AttributeError:
+            for c in fp:
+                yield c
 
     def assertValues(self, values):
         if self.current not in values:
@@ -36,21 +47,21 @@ class Tokenizer(object):
             raise JsonParserException('Wrong character at EOF')
 
     def next(self):
-        try:
-            self.current = self.content.next()
+        for c in self.content:
+            self.current = c
             if self.current == u'"':
                 self.skipblanks = not self.skipblanks
             if self.skipblanks and self.current.isspace():
                 return self.next()
-        except StopIteration:
-            self.current = None
+            return self.current
+        self.current = None
         return self.current
 
 
 class JsonParser(object):
 
-    def __init__(self, s):
-        self.tokenizer = Tokenizer(s)
+    def __init__(self, s, encoding='utf-8'):
+        self.tokenizer = Tokenizer(s, encoding)
 
     def parse(self):
         self.tokenizer.next()
@@ -233,8 +244,8 @@ class JsonParser(object):
         return ret * sign
 
 
-def loads(json):
-    return JsonParser(json).parse()
+def loads(json, encoding='utf-8'):
+    return JsonParser(json, encoding).parse()
 
 
 class JsonVisitor(object):
@@ -336,11 +347,18 @@ if __name__ == '__main__':
     json = \
         u'{"Luca\\n": "A\\u1234B", "luca": {}, "a": true, "False": false, "null": null, "lica": ["Luca", {}], "1": 12.4e-2, "Luca Bacchi": "Bacchi Luca"}'
 
-    pyJson = loads(json)
-
+    import StringIO
     import pprint
 
+    pyJson = loads(json)
     pprint.pprint(pyJson)
+
+    pyJson = loads(StringIO.StringIO(json.encode('utf-8')), 'utf-8')
+    pprint.pprint(pyJson)
+
+    with open('stream.json') as fp:
+        pprint.pprint(loads(fp, 'utf-8'))
+
     pprint.pprint(pyEncode(pyJson, 'utf-8'))
     pprint.pprint(dumps(pyJson))
 

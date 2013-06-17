@@ -15,6 +15,11 @@ Usage:
     
     print easyjson.loads(json)
 
+It is also possible using the "loads" function with a file object. In this case you have to pass an encoding argument. The default is utf-8.
+
+    with open('stream.json') as fp:
+        print easyjson.loads(fp, 'utf-8')
+
 Also a "dumps" function has been implemented: a Python dict or list is required as an argument. All values (see json.org for the meaning of value) are intended to be unicode types. See the utility "pyDecode" if you need to convert a Python dict or list to correct format.
 Al decimal.Decimal, float and int types are interpreted as JSON number type.
 
