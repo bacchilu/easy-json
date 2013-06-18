@@ -14,6 +14,16 @@ Luca Bacchi <bacchilu@gmail.com> - http://www.lucabacchi.it
 import decimal
 
 
+def charsGenerator(stream, encoding):
+    '''
+    Generator of characters, given a unicode or a file object with encoding
+    '''
+
+    for line in stream:
+        for c in line:
+            yield c.decode(encoding)
+
+
 class JsonParserException(Exception):
 
     pass
@@ -21,21 +31,10 @@ class JsonParserException(Exception):
 
 class Tokenizer(object):
 
-    def __init__(self, s, encoding='utf-8'):
+    def __init__(self, stream, encoding='utf-8'):
         self.skipblanks = True
-        self.content = self.getGenerator(s, encoding)
+        self.content = charsGenerator(stream, encoding)
         self.current = None
-
-    def getGenerator(self, fp, encoding):
-        try:
-            while True:
-                ret = fp.read(1).decode(encoding)
-                if ret == '':
-                    raise StopIteration
-                yield ret
-        except AttributeError:
-            for c in fp:
-                yield c
 
     def assertValues(self, values):
         if self.current not in values:
@@ -350,14 +349,20 @@ if __name__ == '__main__':
     import StringIO
     import pprint
 
+    print 'STRING'
     pyJson = loads(json)
     pprint.pprint(pyJson)
+    print
 
+    print 'STREAM'
     pyJson = loads(StringIO.StringIO(json.encode('utf-8')), 'utf-8')
     pprint.pprint(pyJson)
+    print
 
+    print 'FILE'
     with open('stream.json') as fp:
         pprint.pprint(loads(fp, 'utf-8'))
+    print
 
     pprint.pprint(pyEncode(pyJson, 'utf-8'))
     pprint.pprint(dumps(pyJson))
