@@ -59,8 +59,15 @@ class Tokenizer(object):
 
 class JsonParser(object):
 
-    def __init__(self, s, encoding='utf-8'):
+    def __init__(
+        self,
+        s,
+        encoding='utf-8',
+        valueCb=None,
+        ):
+
         self.tokenizer = Tokenizer(s, encoding)
+        self.valueCb = valueCb
 
     def parse(self):
         self.tokenizer.next()
@@ -80,7 +87,7 @@ class JsonParser(object):
                 k = self.parseString()
                 self.tokenizer.assertValues(u':')
                 self.tokenizer.next()
-                v = self.parseValue()
+                v = self.parseValue(k)
                 ret[k] = v
                 if self.tokenizer.current == u',':
                     self.tokenizer.next()
@@ -96,7 +103,7 @@ class JsonParser(object):
         self.tokenizer.assertValues(u'[')
         if self.tokenizer.next() != u']':
             while True:
-                ret.append(self.parseValue())
+                ret.append(self.parseValue(None))
                 if self.tokenizer.current == u',':
                     self.tokenizer.next()
                     continue
@@ -148,22 +155,26 @@ class JsonParser(object):
         self.tokenizer.next()
         return ret
 
-    def parseValue(self):
+    def parseValue(self, key):
         if self.tokenizer.current.isdigit():
-            return self.parseNumber()
-        d = {
-            u'-': self.parseNumber,
-            u'"': self.parseString,
-            u'{': self.parseObject,
-            u'[': self.parseArray,
-            u't': self.parseTrue,
-            u'f': self.parseFalse,
-            u'n': self.parseNull,
-            }
-        try:
-            return d[self.tokenizer.current]()
-        except KeyError:
-            raise JsonParserException(u'Wrong character in value')
+            ret = self.parseNumber()
+        else:
+            d = {
+                u'-': self.parseNumber,
+                u'"': self.parseString,
+                u'{': self.parseObject,
+                u'[': self.parseArray,
+                u't': self.parseTrue,
+                u'f': self.parseFalse,
+                u'n': self.parseNull,
+                }
+            try:
+                ret = d[self.tokenizer.current]()
+            except KeyError:
+                raise JsonParserException(u'Wrong character in value')
+        if self.valueCb is not None:
+            return self.valueCb(key, ret)
+        return ret
 
     def parseTrue(self):
         self.tokenizer.assertValues(u't')
@@ -243,8 +254,8 @@ class JsonParser(object):
         return ret * sign
 
 
-def loads(json, encoding='utf-8'):
-    return JsonParser(json, encoding).parse()
+def loads(json, encoding='utf-8', valueCb=None):
+    return JsonParser(json, encoding, valueCb).parse()
 
 
 class JsonVisitor(object):
@@ -344,13 +355,29 @@ def pyDecode(elem, encoding):
 
 if __name__ == '__main__':
     json = \
-        u'{"Luca\\n": "A\\u1234B", "luca": {}, "a": true, "False": false, "null": null, "lica": ["Luca", {}], "1": 12.4e-2, "Luca Bacchi": "Bacchi Luca"}'
+        u'{"compleanno": 182214000, "born": "11/10/1975", "Luca\\n": "A\\u1234B", "luca": {}, "a": true, "False": false, "null": null, "lica": ["Luca", {}], "1": 12.4e-2, "Luca Bacchi": "Bacchi Luca"}'
 
     import StringIO
     import pprint
 
+
+    def dateParser(k, v):
+        import datetime
+
+        if k == u'compleanno':
+            assert isinstance(v, decimal.Decimal)
+            return datetime.datetime.fromtimestamp(int(v))
+
+        if not isinstance(v, unicode):
+            return v
+        try:
+            return datetime.datetime.strptime(v, u'%d/%m/%Y')
+        except ValueError:
+            return v
+
+
     print 'STRING'
-    pyJson = loads(json)
+    pyJson = loads(json, valueCb=dateParser)
     pprint.pprint(pyJson)
     print
 
