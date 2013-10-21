@@ -68,3 +68,7 @@ In this example every value is passed to the dateParser callback.
 If the key is "compleanno", we assume the json data contains a unix timestamp and we require this to be translate in a Python Datetime.
 Also we check if a particular unicode value is in the form "day/month/year". Also in this case we result a Datetime value.
 In every other case, the original value is returned: nothing is done.
+
+# License
+
+This software is distributed under the terms of the MIT license.
